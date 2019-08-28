@@ -66,7 +66,7 @@ def showTrace(trace, layout=None, title=None):
     return fig
 
 
-def makeMTX(spat_coeffs, radial_filter, kr_IDX, viz_order=None, stepsize_deg=1):
+def makeMTX(spat_coeffs, radial_filter, kr_IDX, viz_order=None, stepsize_deg=1, spherical_harmonic_type='complex'):
     """Returns a plane wave decomposition over a full sphere
 
     Parameters
@@ -97,7 +97,7 @@ def makeMTX(spat_coeffs, radial_filter, kr_IDX, viz_order=None, stepsize_deg=1):
         viz_order = _np.int(_np.ceil(_np.sqrt(spat_coeffs.shape[0]) - 1))
 
     angles = _np.mgrid[0:360:stepsize_deg, 0:181:stepsize_deg].reshape((2, -1)) * _np.pi / 180
-    Y = plane_wave_decomp(viz_order, angles, spat_coeffs[:, kr_IDX], radial_filter[:, kr_IDX])
+    Y = plane_wave_decomp(viz_order, angles, spat_coeffs[:, kr_IDX], radial_filter[:, kr_IDX], spherical_harmonic_type=spherical_harmonic_type)
 
     return Y.reshape((360, -1)).T  # Return pwd data as [181, 360] matrix
 

@@ -194,7 +194,7 @@ def FFT(time_signals, fs=None, NFFT=None, oversampling=1, first_sample=0, last_s
     return fftData, f
 
 
-def spatFT(data, position_grid, order_max=10, spherical_harmonic_bases=None):
+def spatFT(data, position_grid, order_max=10, spherical_harmonic_type='complex', spherical_harmonic_bases=None):
     """Spatial Fourier Transform
 
     Parameters
@@ -205,6 +205,7 @@ def spatFT(data, position_grid, order_max=10, spherical_harmonic_bases=None):
        Azimuths/Colatitudes/Gridweights of spatial sampling points
     order_max : int, optional
        Maximum transform order [Default: 10]
+    spherical_harmonic_type : {'complex', 'real'}
     spherical_harmonic_bases : array_like, optional
        Spherical harmonic base coefficients (not yet weighted by spatial sampling grid) [Default: None]
 
@@ -230,7 +231,7 @@ def spatFT(data, position_grid, order_max=10, spherical_harmonic_bases=None):
     if (spherical_harmonic_bases is None or
             spherical_harmonic_bases.shape[0] < data.shape[0] or
             spherical_harmonic_bases.shape[1] < (order_max + 1) ** 2):
-        spherical_harmonic_bases = sph_harm_all(order_max, position_grid.azimuth, position_grid.colatitude)
+        spherical_harmonic_bases = sph_harm_all(order_max, position_grid.azimuth, position_grid.colatitude, type=spherical_harmonic_type)
 
     if position_grid.weight is None:
         # calculate pseudo inverse in case no spatial sampling point weights are given
@@ -261,7 +262,7 @@ def spatFT_RT(data, spherical_harmonic_weighted):
     return _np.dot(spherical_harmonic_weighted, data)
 
 
-def iSpatFT(spherical_coefficients, position_grid, order_max=None, spherical_harmonic_bases=None):
+def iSpatFT(spherical_coefficients, position_grid, order_max=None, spherical_harmonic_type='complex', spherical_harmonic_bases=None):
     """Inverse spatial Fourier Transform
 
     Parameters
@@ -272,6 +273,7 @@ def iSpatFT(spherical_coefficients, position_grid, order_max=None, spherical_har
        Azimuth/Colatitude angles of spherical coefficients
     order_max : int, optional
        Maximum transform order [Default: highest available order]
+    spherical_harmonic_type : {'complex', 'real'}
     spherical_harmonic_bases : array_like, optional
        Spherical harmonic base coefficients (not yet weighted by spatial sampling grid) [Default: None]
 
@@ -292,12 +294,12 @@ def iSpatFT(spherical_coefficients, position_grid, order_max=None, spherical_har
     if (spherical_harmonic_bases is None
             or spherical_harmonic_bases.shape[1] < number_of_coefficients
             or spherical_harmonic_bases.shape[1] != position_grid.azimuths.size):
-        spherical_harmonic_bases = sph_harm_all(order_max, position_grid.azimuth, position_grid.colatitude)
+        spherical_harmonic_bases = sph_harm_all(order_max, position_grid.azimuth, position_grid.colatitude, type=spherical_harmonic_type)
 
     return _np.dot(spherical_harmonic_bases, spherical_coefficients)
 
 
-def spatFT_LSF(data, position_grid, order_max=10, spherical_harmonic_bases=None):
+def spatFT_LSF(data, position_grid, order_max=10, spherical_harmonic_type='complex', spherical_harmonic_bases=None):
     """Spatial Fourier Transform by least square fit to provided data
 
     Parameters
@@ -308,6 +310,7 @@ def spatFT_LSF(data, position_grid, order_max=10, spherical_harmonic_bases=None)
        Azimuth / colatitude data locations
     order_max: int, optional
        Maximum transform order [Default: 10]
+    spherical_harmonic_type : {'complex', 'real'}
     spherical_harmonic_bases : array_like, optional
        Spherical harmonic base coefficients (not yet weighted by spatial sampling grid) [Default: None]
 
@@ -321,12 +324,12 @@ def spatFT_LSF(data, position_grid, order_max=10, spherical_harmonic_bases=None)
             spherical_harmonic_bases.shape[0] < data.shape[0] or
             spherical_harmonic_bases.shape[1] < (order_max + 1) ** 2):
         position_grid = SphericalGrid(*position_grid)
-        spherical_harmonic_bases = sph_harm_all(order_max, position_grid.azimuth, position_grid.colatitude)
+        spherical_harmonic_bases = sph_harm_all(order_max, position_grid.azimuth, position_grid.colatitude, type=spherical_harmonic_type)
 
     return lstsq(spherical_harmonic_bases, data)[0]
 
 
-def plane_wave_decomp(order, wave_direction, field_coeffs, radial_filter, weights=None):
+def plane_wave_decomp(order, wave_direction, field_coeffs, radial_filter, weights=None, spherical_harmonic_type='complex'):
     """Plane wave decomposition
 
     Parameters
@@ -341,6 +344,7 @@ def plane_wave_decomp(order, wave_direction, field_coeffs, radial_filter, weight
        Radial filters
     weights : array_like, optional
        Weighting function. Either scalar, one per directions or of dimension (nKR_bins x  nDirections). [Default: None]
+    spherical_harmonic_type : {'complex', 'real'}
 
     Returns
     -------
@@ -386,7 +390,7 @@ def plane_wave_decomp(order, wave_direction, field_coeffs, radial_filter, weight
     else:
         weights = 1
 
-    sph_harms = sph_harm_all(order, wave_direction.azimuth, wave_direction.colatitude)
+    sph_harms = sph_harm_all(order, wave_direction.azimuth, wave_direction.colatitude, type=spherical_harmonic_type)
     filtered_coeffs = field_coeffs * _np.repeat(radial_filter, _np.r_[:order + 1] * 2 + 1, axis=0)
     OutputArray = _np.dot(sph_harms, filtered_coeffs)
     OutputArray = _np.multiply(OutputArray, weights)
